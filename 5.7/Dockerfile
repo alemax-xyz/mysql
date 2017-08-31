@@ -12,6 +12,8 @@ RUN apt-get update && \
         python-software-properties \
         software-properties-common \
         apt-utils
+RUN apt-get install -y \
+        wget
 
 RUN mkdir -p /build/image
 WORKDIR /build
@@ -37,8 +39,6 @@ RUN apt-get download \
         mysql-server-core-5.7
 RUN for file in *.deb; do dpkg-deb -x ${file} image/; done
 
-# Term:ReadKey
-
 WORKDIR /build/image
 RUN rm -rf \
         etc/apparmor.d \
@@ -49,6 +49,7 @@ RUN rm -rf \
         etc/mysql/* \
         etc/terminfo/README \
         lib/systemd \
+        usr/bin/innotop \
         usr/bin/mysqld_multi \
         usr/bin/dh_perl_dbi \
         usr/share/apport \
@@ -68,6 +69,8 @@ RUN rm -rf \
         usr/share/mysql/mysqld_multi.server \
         usr/share/mysql-common \
         usr/share/perl5 && \
+    wget https://raw.githubusercontent.com/innotop/innotop/master/innotop -O usr/bin/innotop && \
+    chmod a+x usr/bin/innotop && \
     mkdir -p \
         etc/mysql/conf.d \
         var/run/mysqld \
