@@ -1,18 +1,30 @@
-#
-# This is a multi-stage build.
-# Actual build is at the very end.
-#
+FROM clover/base AS base
 
-FROM library/ubuntu:xenial AS build
+RUN groupadd \
+        --gid 50 \
+        --system \
+        mysql \
+ && useradd \
+        --home-dir /var/lib/mysql \
+        --no-create-home \
+        --system \
+        --shell /bin/false \
+        --uid 50 \
+        --gid 50 \
+        mysql
 
-ENV DEBIAN_FRONTEND noninteractive
-ENV LANG C.UTF-8
-RUN apt-get update && \
-    apt-get install -y \
-        python-software-properties \
+FROM library/ubuntu:bionic AS build
+
+ENV LANG=C.UTF-8
+
+RUN export DEBIAN_FRONTEND=noninteractive \
+ && apt-get update \
+ && apt-get install -y \
         software-properties-common \
         apt-utils
-RUN apt-get install -y \
+
+RUN export DEBIAN_FRONTEND=noninteractive \
+ && apt-get install -y \
         wget
 
 RUN mkdir -p /build/image
@@ -69,27 +81,27 @@ RUN rm -rf \
         usr/share/mysql/mysqld_multi.server \
         usr/share/mysql-common \
         usr/share/perl5 && \
-    wget https://raw.githubusercontent.com/innotop/innotop/master/innotop -O usr/bin/innotop && \
+    wget -nv https://raw.githubusercontent.com/innotop/innotop/master/innotop -O usr/bin/innotop && \
     chmod a+x usr/bin/innotop && \
     mkdir -p \
         etc/mysql/conf.d \
         var/run/mysqld \
         var/lib/mysql \
         var/lib/mysql-files && \
-    chmod 0770 var/lib/mysql-files && \
-    echo "!includedir /etc/mysql/conf.d/" > etc/mysql/my.cnf
+    chmod 0770 var/lib/mysql-files
 
-COPY init.sh etc/
+COPY --from=base /etc/group /etc/gshadow /etc/passwd /etc/shadow etc/
+COPY my.cnf etc/mysql/
+COPY conf.d/ etc/mysql/conf.d/
+COPY init/ etc/init/
 COPY init.sql usr/share/mysql/
 
 
-FROM clover/perl-base
+FROM clover/perl
 
 WORKDIR /
 COPY --from=build /build/image /
 
 VOLUME ["/var/lib/mysql"]
-
-CMD ["sh", "/etc/init.sh"]
 
 EXPOSE 3306
