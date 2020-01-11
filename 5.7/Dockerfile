@@ -85,7 +85,7 @@ RUN rm -rf \
     chmod a+x usr/bin/innotop && \
     mkdir -p \
         etc/mysql/conf.d \
-        var/run/mysqld \
+        run/mysqld \
         var/lib/mysql \
         var/lib/mysql-files && \
     chmod 0770 var/lib/mysql-files
