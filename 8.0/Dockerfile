@@ -13,7 +13,7 @@ RUN groupadd \
         --gid 50 \
         mysql
 
-FROM library/ubuntu:bionic AS build
+FROM library/ubuntu:focal AS build
 
 ENV LANG=C.UTF-8
 
@@ -33,10 +33,10 @@ WORKDIR /build
 RUN apt-get download \
         libedit2 \
         libbsd0 \
-        libtinfo5 \
+        libtinfo6 \
         libaio1 \
         liblz4-1 \
-        libmysqlclient20 \
+        libmysqlclient21 \
         libnuma1 \
         libstdc++6 \
         libwrap0 \
@@ -45,11 +45,13 @@ RUN apt-get download \
         libdbi-perl \
         libdbd-mysql-perl \
         libterm-readkey-perl \
-        mysql-client-5.7 \
-        mysql-client-core-5.7 \
+        libevent-core-2.1-7 \
+        libevent-pthreads-2.1-7 \
+        mysql-client-8.0 \
+        mysql-client-core-8.0 \
         mysql-common \
-        mysql-server-5.7 \
-        mysql-server-core-5.7
+        mysql-server-8.0 \
+        mysql-server-core-8.0
 RUN for file in *.deb; do dpkg-deb -x ${file} image/; done
 
 WORKDIR /build/image
@@ -98,7 +100,7 @@ COPY init/ etc/init/
 COPY init.sql usr/share/mysql/
 
 
-FROM clover/perl:5.26
+FROM clover/perl:5.30
 
 WORKDIR /
 COPY --from=build /build/image /
