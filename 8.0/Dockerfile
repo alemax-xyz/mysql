@@ -13,7 +13,7 @@ RUN groupadd \
         --gid 50 \
         mysql
 
-FROM library/ubuntu:focal AS build
+FROM library/debian:stable-slim AS build
 
 ENV LANG=C.UTF-8
 
@@ -28,30 +28,22 @@ RUN export DEBIAN_FRONTEND=noninteractive \
  && apt-get install -y \
         wget
 
+RUN export DEBIAN_FRONTEND=noninteractive \
+ && echo "deb [trusted=yes] http://repo.mysql.com/apt/debian/ bookworm mysql-8.0" > /etc/apt/sources.list.d/mysql.list \
+ && apt-get update
+
 RUN mkdir -p /build/image
 WORKDIR /build
 RUN apt-get download \
-        libedit2 \
-        libbsd0 \
-        libtinfo6 \
         libaio1 \
-        liblz4-1 \
-        libmysqlclient21 \
         libnuma1 \
-        libstdc++6 \
-        libwrap0 \
-        netbase \
-        ncurses-base \
-        libdbi-perl \
-        libdbd-mysql-perl \
-        libterm-readkey-perl \
-        libevent-core-2.1-7 \
-        libevent-pthreads-2.1-7 \
-        mysql-client-8.0 \
-        mysql-client-core-8.0 \
+        libmysqlclient21 \
         mysql-common \
-        mysql-server-8.0 \
-        mysql-server-core-8.0
+        mysql-client \
+        mysql-community-client \
+        mysql-community-client-core \
+        mysql-community-server \
+        mysql-community-server-core
 RUN for file in *.deb; do dpkg-deb -x ${file} image/; done
 
 WORKDIR /build/image
@@ -67,6 +59,8 @@ RUN rm -rf \
         usr/bin/innotop \
         usr/bin/mysqld_multi \
         usr/bin/dh_perl_dbi \
+        usr/bin/mysqldumpslow \
+        usr/lib/tempfiles.d \
         usr/share/apport \
         usr/share/doc \
         usr/share/gcc-5 \
@@ -74,18 +68,17 @@ RUN rm -rf \
         usr/share/lintian \
         usr/share/libdbi-perl \
         usr/share/man \
-        usr/share/mysql/docs \
-        usr/share/mysql/*.sql \
-        usr/share/mysql/*.txt \
-        usr/share/mysql/echo_stderr \
-        usr/share/mysql/magic \
-        usr/share/mysql/mysql-log-rotate \
-        usr/share/mysql/mysql-systemd-start \
-        usr/share/mysql/mysqld_multi.server \
+        usr/share/mysql-8.0/docs \
+        usr/share/mysql-8.0/*.sql \
+        usr/share/mysql-8.0/*.txt \
+        usr/share/mysql-8.0/echo_stderr \
+        usr/share/mysql-8.0/magic \
+        usr/share/mysql-8.0/mysql-helpers \
+        usr/share/mysql-8.0/mysql-log-rotate \
+        usr/share/mysql-8.0/mysql-systemd-start \
+        usr/share/mysql-8.0/mysqld_multi.server \
         usr/share/mysql-common \
         usr/share/perl5 && \
-    wget --no-check-certificate -nv https://raw.githubusercontent.com/innotop/innotop/master/innotop -O usr/bin/innotop && \
-    chmod a+x usr/bin/innotop && \
     mkdir -p \
         etc/mysql/conf.d \
         run/mysqld \
@@ -100,7 +93,7 @@ COPY init/ etc/init/
 COPY init.sql usr/share/mysql/
 
 
-FROM clover/perl:5.30
+FROM clover/common
 
 WORKDIR /
 COPY --from=build /build/image /
