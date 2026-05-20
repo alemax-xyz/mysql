@@ -1,6 +1,6 @@
 override TARGETS = 8.4 9.7
 
-TAG ?= clover/mysqld
+TAG ?= clover/mysql
 PLATFORM ?= linux/amd64
 
 all: ${TARGETS} latest
